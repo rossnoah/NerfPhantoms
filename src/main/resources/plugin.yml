@@ -12,6 +12,16 @@ commands:
   nerfphantoms:
     usage: /nerfphantoms <help | togglespawn | kill | reload>
     permission-message: You don't have permission.
+    permission: nerfphantoms.command
+
+  phantom:
+    usage: /<command>
+    aliases:
+      - phantoms
+      - togglephantoms
+      - togglephantom
+    permission: nerfphantoms.phantomcommand
+
 permissions:
   nerfphantoms.*:
     description: Gives access to all NerfPhantoms commands
@@ -25,6 +35,7 @@ permissions:
       nerfphantoms.kill: true
       nerfphantoms.disablespawn.self: true
       nerfphantoms.disablespawn.others: true
+    default: op
   nerfphantoms.reload:
     description: Reload plugin config
     default: false

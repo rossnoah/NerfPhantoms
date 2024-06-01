@@ -35,10 +35,16 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
     private Storage storage;
     private FileConfiguration config;
     Set<Player> phantomDisabled = ConcurrentHashMap.newKeySet();
+    private static NerfPhantoms instance;
 
+
+    public static NerfPhantoms getInstance() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
+        instance = this;
         new Metrics(this);
         initConfig();
 
@@ -59,6 +65,8 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         getCommand("nerfphantoms").setTabCompleter(new TabCompletion());
         getServer().getPluginManager().registerEvents(this, this);
         new StatResetTask(this).runTaskTimerAsynchronously(this, 0L, 1200L);
+
+        this.getCommand("phantom").setExecutor(new PhantomCommand());
     }
 
 
@@ -134,7 +142,7 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         return false;
     }
 
-    private boolean togglePhantomSpawn(Player player) {
+    public boolean togglePhantomSpawn(Player player) {
         return this.togglePhantomSpawn(player, true);
     }
 
@@ -319,6 +327,9 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         defaultConfig.set("damageModifier", 1.0);
         defaultConfig.set("fixedSize.enabled", false);
         defaultConfig.set("fixedSize.value", 1);
+
+        defaultConfig.set("messages.phantom-command", "You have %status% phantom spawns.");
+
 
         ConfigurationSection db = defaultConfig.createSection("database");
         db.set("enabled", true);
