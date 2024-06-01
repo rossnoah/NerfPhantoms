@@ -15,8 +15,7 @@ public class PhantomCommand implements CommandExecutor {
         }
         Player player = (Player) commandSender;
         boolean isDisabled = NerfPhantoms.getInstance().togglePhantomSpawn(player);
-        String message = NerfPhantoms.getInstance().getConfig().getString("messages.phantom-command");
-        message.replace("%status%", isDisabled ? "disabled" : "enabled");
+        String message = NerfPhantoms.getInstance().getConfig().getString("messages.phantom-command").replace("%status%", isDisabled ? "disabled" : "enabled");
 
         MiniMessage miniMessage = MiniMessage.miniMessage();
         player.sendMessage(miniMessage.deserialize(message));
