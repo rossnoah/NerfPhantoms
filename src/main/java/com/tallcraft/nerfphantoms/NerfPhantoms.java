@@ -30,13 +30,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.kyori.adventure.text.minimessage.MiniMessage;
+
 public final class NerfPhantoms extends JavaPlugin implements Listener {
     private final Logger logger = Logger.getLogger(this.getName());
     private Storage storage;
     private FileConfiguration config;
     Set<Player> phantomDisabled = ConcurrentHashMap.newKeySet();
     private static NerfPhantoms instance;
-
 
     public static NerfPhantoms getInstance() {
         return instance;
@@ -50,12 +51,12 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
 
         // Initialize database if enabled
         ConfigurationSection databaseCfg = config.getConfigurationSection("database");
-        if(databaseCfg != null && databaseCfg.getBoolean("enabled")) {
+        if (databaseCfg != null && databaseCfg.getBoolean("enabled")) {
             storage = new Storage(databaseCfg);
             try {
                 storage.init(this);
                 logger.info("Database connection established");
-            } catch(SQLException ex) {
+            } catch (SQLException ex) {
                 storage = null;
                 logger.info("Error while connection to database");
                 ex.printStackTrace();
@@ -69,7 +70,14 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         this.getCommand("phantom").setExecutor(new PhantomCommand());
     }
 
+    private String getStateTag(boolean isDisabled) {
+        // isDisabled == true means "off", so "on" is when enabled (not disabled)
+        return isDisabled
+                ? "<red>off</red>"
+                : "<green>on</green>";
+    }
 
+    @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length == 0) {
             return false;
@@ -120,8 +128,10 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
                 }
                 Player player = (Player) sender;
                 boolean state = togglePhantomSpawn(player);
-                player.sendMessage((state ? "Disabled" : "Enabled")
-                        + " phantom spawn for " + player.getDisplayName() + ".");
+                // state == true means now disabled, so "off"
+                String stateTag = getStateTag(state);
+                String msg = "<white>Turned</white> " + stateTag + " <white>your phantom spawns.</white>";
+                player.sendMessage(MiniMessage.miniMessage().deserialize(msg));
                 return true;
             }
             if (!sender.hasPermission("nerfphantoms.disablespawn.others")) {
@@ -134,8 +144,10 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
                 return true;
             }
             boolean state = togglePhantomSpawn(victim);
-            sender.sendMessage((state ? "Disabled" : "Enabled")
-                    + " phantom spawn for " + victim.getDisplayName() + ".");
+            String stateTag = getStateTag(state);
+            String msg = "<white>Turned</white> " + stateTag + " <white>phantom spawns for</white> <white>"
+                    + victim.getDisplayName() + "</white>.";
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(msg));
             return true;
         }
 
@@ -188,7 +200,8 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
             return false;
         }
         List<String> enabledWorlds = config.getStringList("enabledWorlds");
-        // If no worlds are defined in "enabledWorlds", disable allowlist functionality and treat
+        // If no worlds are defined in "enabledWorlds", disable allowlist functionality
+        // and treat
         // all worlds as enabled.
         return enabledWorlds.size() == 0 || enabledWorlds.contains(world.getName());
     }
@@ -202,7 +215,6 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         }
         return n;
     }
-
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
@@ -245,7 +257,7 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
             return;
         }
 
-        if(storage == null) {
+        if (storage == null) {
             return;
         }
         // Check storage for disabled player setting (async)
@@ -284,7 +296,8 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
                 return;
             }
         } else {
-            if (config.getBoolean("onlyNerfNatural")) return;
+            if (config.getBoolean("onlyNerfNatural"))
+                return;
         }
         // Nerf
         Phantom phantom = (Phantom) event.getEntity();
@@ -296,17 +309,17 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
             phantom.setSize(config.getInt("fixedSize.value"));
         }
 
-
     }
 
     private void initConfig() {
         config = this.getConfig();
 
         // Warn if "enabledWorlds" contains unknown worlds.
-        // If config isn't initialized at this point "enabledWorlds" will be an empty list.
+        // If config isn't initialized at this point "enabledWorlds" will be an empty
+        // list.
         List<String> enabledWorlds = config.getStringList("enabledWorlds");
-        for(String worldName : enabledWorlds) {
-            if(Bukkit.getWorld(worldName) == null) {
+        for (String worldName : enabledWorlds) {
+            if (Bukkit.getWorld(worldName) == null) {
                 logger.warning("Config entry \"enabledWorlds\" contains unknown world '" + worldName + "'.");
             }
         }
@@ -329,7 +342,6 @@ public final class NerfPhantoms extends JavaPlugin implements Listener {
         defaultConfig.set("fixedSize.value", 1);
 
         defaultConfig.set("messages.phantom-command", "You have %status% phantom spawns.");
-
 
         ConfigurationSection db = defaultConfig.createSection("database");
         db.set("enabled", true);
